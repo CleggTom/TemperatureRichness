@@ -4,5 +4,5 @@ This repository contains code for the paper __"Variation in the thermal sensitiv
 # Code
 contains scripts for simualtions with and without assebmly aswell as analysis of the empirical dataset
 
-#Data
+# Data
 Contains raw data from Smith et al. (2019) and Smith et al. (2020)
