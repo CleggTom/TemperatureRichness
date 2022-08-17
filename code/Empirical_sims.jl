@@ -71,16 +71,11 @@ exp_ind = findall(df_all[:,2] .== "exp")
 
 #meta
 df_meta = float.(df_all[meta_ind,4:5])
-#transform and scale
-df_meta[:,2] .= (df_meta[:,2] .- mean(df_meta[:,2])) ./ sqrt(var(df_meta[:,2]))
 #fit MVNormal
 dB_meta = Distributions.fit(MvNormal, df_meta')
 
-
 #Experiments
 df_exp = float.(df_all[exp_ind,4:5])
-#transform and scale
-df_exp[:,2] .= (df_exp[:,2] .- mean(df_exp[:,2])) ./ sqrt(var(df_exp[:,2]))
 #fit MVNormal
 dB_exp = Distributions.fit(MvNormal, df_exp')
 
@@ -166,7 +161,7 @@ begin
     
         hidedecorations!(am1, grid = false)
         hidedecorations!(am3, grid = false)
-    end
+    ends
 
     Makie.scatter!(a_richness, T_plot, sim_exp, color = "cornflowerblue", label = "Experiments")
     Makie.lines!(a_richness, T_plot, pred_exp, color = "cornflowerblue")
