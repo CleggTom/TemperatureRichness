@@ -1,2 +1,2 @@
 # Temperature_feasibility
-This repository contains my work looking at the effects of temperature on the feasabiltiy of ecosystems. 
+This repository contains code for the paper "Variation in the thermal sensitivity of metabolic traits can drive the temperature-dependence of species richness in microbial communities"
