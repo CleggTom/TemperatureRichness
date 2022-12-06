@@ -109,6 +109,8 @@ begin
     r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.1, :vE => 0.1, :Σ => 0.0)
     a = Dict(:uB0 => -3.0, :vB0 => 0.2, :uE => 0.1, :vE => 0.1, :Σ => 0.0)
 
+    T_vec = -1.5:0.3:1.5
+
     sim,pred = pred_richness(r,a,T_vec,50,0.5)
 
     f = Figure()
@@ -124,14 +126,14 @@ prob = 0.5
 
 #mean
 begin
-    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.2, :vE => 0.01, :Σ => 0.0)
-    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.2, :vE => 0.01, :Σ => 0.0)
+    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.3, :vE => 0.01, :Σ => 0.0)
+    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.6, :vE => 0.01, :Σ => 0.0)
 
     #mean
     sim_μ_1,pred_μ_1 = pred_richness(r,a,T_vec,N_rep,prob)
     #alter μE
-    r[:uE] = 0.6
-    a[:uE] = 0.6
+    # r[:uE] = 1.0
+    a[:uE] = -0.6
     sim_μ_2,pred_μ_2 = pred_richness(r,a,T_vec,N_rep,prob)
 
     f = Figure()
@@ -146,8 +148,8 @@ end
 
 #var
 begin
-    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.2, :vE => 0.01, :Σ => 0.0)
-    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.2, :vE => 0.01, :Σ => 0.0)
+    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.6, :vE => 0.01, :Σ => 0.0)
+    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.6, :vE => 0.01, :Σ => 0.0)
 
     #mean
     sim_σ_1,pred_σ_1 = pred_richness(r,a,T_vec,N_rep,prob)
@@ -168,8 +170,8 @@ end
 
 #cov
 begin
-    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.2, :vE => 0.2, :Σ => 0.0)
-    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.2, :vE => 0.2, :Σ => 0.0)
+    r = Dict(:uB0 => 0.0, :vB0 => 0.2, :uE => 0.6, :vE => 0.2, :Σ => 0.0)
+    a = Dict(:uB0 => -3.5, :vB0 => 0.2, :uE => 0.6, :vE => 0.2, :Σ => 0.0)
 
     #mean
     sim_Σ_1,pred_Σ_1 = pred_richness(r,a,T_vec,N_rep,prob)
@@ -195,14 +197,16 @@ begin
 
     # Makie.xlabel!(, "Temperature")
 
-    linkyaxes!(ax[1],ax[2],ax[3])
+    # linkyaxes!(ax[1],ax[2],ax[3])
+    Makie.ylims!(ax[3],(0,40))
+
 
     T_plot = GLV.ΔT_to_C.(T_vec,13.0)
 
     #mean
-    Makie.scatter!(ax[1], T_plot, sim_μ_1, color = "darkblue", label = "0.1")
+    Makie.scatter!(ax[1], T_plot, sim_μ_1, color = "darkblue", label = "0.6")
     Makie.lines!(ax[1], T_plot, pred_μ_1, color = "darkblue")
-    Makie.scatter!(ax[1], T_plot, sim_μ_2, color = "crimson", label = "0.6")
+    Makie.scatter!(ax[1], T_plot, sim_μ_2, color = "crimson", label = "-0.6")
     Makie.lines!(ax[1], T_plot, pred_μ_2, color = "crimson")
     # axislegend(ax[1], name = "a")
     
@@ -217,9 +221,9 @@ begin
     Makie.scatter!(ax[3], T_plot, sim_Σ_2, color = "crimson", label = "-0.1")
     Makie.lines!(ax[3], T_plot, pred_Σ_2, color = "crimson")
 
-    f[1,1] = Legend(f, ax[1], "mean", tellwidth = false, halign = :right, valign = :top)
-    f[1,2] = Legend(f, ax[2], "variance", tellwidth = false, halign = :right, valign = :top)
-    f[1,3] = Legend(f, ax[3], "covariance", tellwidth = false,  halign = :right, valign = :top)
+    f[1,1] = Legend(f, ax[1], "Mean", tellwidth = false, halign = :right, valign = :top)
+    f[1,2] = Legend(f, ax[2], "Variance", tellwidth = false, halign = :right, valign = :top)
+    f[1,3] = Legend(f, ax[3], "Covariance", tellwidth = false,  halign = :right, valign = :top)
 
     Label(f[1,1:3,Bottom()], "Temperature °C", padding = (0,0,0,35))
     Label(f[1,1,Left()], "Richness N", padding = (0,35,0,10), rotation = 3.14 / 2)

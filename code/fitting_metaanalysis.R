@@ -39,7 +39,7 @@ pb <- progress::progress_bar$new(total = number_of_curves*number_of_models,
                                  format ="[:bar] :percent :elapsedfull")
 
 df_nested <- df_nested %>%
-    mutate(E = 0.0, B0 = 0.0)
+    mutate(E_lm = 0.0, B0_lm = 0.0, E_ss = 0.0, B0_ss = 0.0)
 
 for(i in 1:nrow(df_nested)){
     
@@ -47,34 +47,76 @@ for(i in 1:nrow(df_nested)){
         pb$tick()
     }
 
-    x <- df_nested$data[[i]]
+    x <- df_nested$data[[i]] %>% filter(growth_rate > 0)
 
+
+    
+    #fit linear model
     #find peak
     i_pk <- which.max(x$growth_rate)
-
-    x <- x %>% 
-    filter(Temperature < x$Temperature[i_pk],growth_rate > 0 ) %>%
-    mutate(T = 1/(8.617e-5) * ((1/(Temperature + 273.15)) - (1/ 286.15)))
+    #format data
+    x_lin <- x %>% 
+        filter(Temperature < x$Temperature[i_pk]) %>%
+        mutate(T = 1/(8.617e-5) * ((1/(Temperature + 273.15)) - (1/ 286.15)))
     
-    if(nrow(x) > 3){
-        if(length(unique(x$T)) > 3 ){
-    model <- lm(log(growth_rate) ~ T, data = x)
+    #fit
+    if(nrow(x_lin) > 3){
+        if(length(unique(x_lin$T)) > 3 ){
+            lm_mod <- lm(log(growth_rate) ~ T, data = x_lin)
         }
     }
 
-    if(all(tidy(model)$p.value < 0.05)){
-        df_nested$B0[i] <- coef(model)[1] 
-        df_nested$E[i] <- -coef(model)[2]  
+    if (all(tidy(lm_mod)$p.value < 0.05)) {
+        df_nested$B0_lm[i] <- coef(lm_mod)[1]
+        df_nested$E_lm[i] <- coef(lm_mod)[2]
+    }
+    
+    #fit sharpe-schoolfield
+    start_vals <- get_start_vals(x$Temperature, x$growth_rate, model_name = 'sharpeschoolhigh_1981')
+
+    start_vals[is.na(start_vals)] = 0.0
+    start_vals[is.infinite(start_vals)] = 0.0
+
+    ss_mod <- tryCatch({
+        nls_multstart(growth_rate ~ sharpeschoolhigh_1981(temp = Temperature, r_tref, e, eh, th, tref = 13),
+                            data = x,
+                            iter = c(4, 4 ,4 ,4),
+                            start_lower = start_vals - 10,
+                            start_upper = start_vals + 10,
+                            lower = get_lower_lims(x$Temperature, x$growth_rate, model_name = 'sharpeschoolhigh_1981'),
+                            upper = get_upper_lims(x$Temperature, x$growth_rate, model_name = 'sharpeschoolhigh_1981'),
+                            supp_errors = 'Y')},
+        error = function(e){})
+
+    if (!is.null(ss_mod)){
+        x <- tryCatch(tidy(ss_mod), error = function(x){})
+        if (!is.null(x)) {
+            if (!any(is.nan(x$p.value))) {
+                if (all(x$p.value < 0.05)) {
+                    df_nested$B0_ss[i] <- coef(ss_mod)[1]
+                    df_nested$E_ss[i] <- coef(ss_mod)[2]
+                }
+            }
+        }
     }
 }
 
-df_nested <- df_nested %>% 
-    filter(B0 != 0.0, B0 > -30, E < 2) 
+df_final <- df_nested %>%
+    filter(B0_ss != 0.0, E_ss != 0.0, log(B0_ss) > -15) %>%
+    mutate(B0 = log(B0_ss), E = E_ss) %>%
+    group_by(source) %>%
+    mutate(B0 = (B0 - mean(B0)) / sd(B0))
 
-df_nested %>%
+df_final %>%
     ggplot(aes(B0,E, color = source))+
         geom_point()
 
-write_csv(df_nested, "./data/summary.csv")
+df_final %>%
+    pivot_longer(c(B0, E)) %>%
+    ggplot(aes(value)) +
+        geom_histogram() +
+        facet_wrap(name~source, scales = "free")
+
+write_csv(df_final, "./data/summary.csv")
 
 

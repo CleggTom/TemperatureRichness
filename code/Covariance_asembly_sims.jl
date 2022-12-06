@@ -81,16 +81,16 @@ end
 
 ###Figures
 #load "real" parameters
-a = load("./data/smith_mvnorm.jld")["dB_grw"]
-dR = Distributions.MvNormal(a.μ, a.Σ.mat)
+# a = load("./data/smith_mvnorm.jld")["dB_grw"]
+# dR = Distributions.MvNormal(a.μ, a.Σ.mat)
 
 #variation
-μ_vec = [0.0,0.6]
+μ_vec = [-0.6,0.0,0.6]
 σ_vec = [0.01,0.2]
 Σ_vec = [-0.1,0.0]
 
 #temp vec
-T_vec = -1.5:0.2:1.5
+T_vec = -1.5:0.1:1.5
 nrep = 3
 N_inv = 2000
 
@@ -194,7 +194,8 @@ begin
     f = Makie.Figure(resolution = (550, 750))
 
     a11 = f[1,1][1,1] = Axis(f)
-    a12 = f[1,1][1,2] = Axis(f)
+    a121 = f[1,1][1,2] = Axis(f)
+    a122 = f[1,1][1,3] = Axis(f)
 
     a21 = f[2,1][1,1] = Axis(f, ylabel = "Richness N")
     a22 = f[2,1][1,2] = Axis(f)
@@ -202,28 +203,33 @@ begin
     a31 = f[3,1][1,1] = Axis(f)
     a32 = f[3,1][1,2] = Axis(f)
 
-    linkyaxes!(a11,a12)
+    linkyaxes!(a11,a121,a122)
     linkyaxes!(a21,a22)
     linkyaxes!(a31,a32)
 
 
 
+
     Label(f[1,1][1,1,TopLeft()], "A",padding = (0.0,0.0,5,0.0))
     Label(f[1,1][1,2,TopLeft()], "B",padding = (0.0,0.0,5,0.0))
-    Label(f[2,1][1,1,TopLeft()], "C",padding = (0.0,0.0,5,0.0))
-    Label(f[2,1][1,2,TopLeft()], "D",padding = (0.0,0.0,5,0.0))
-    Label(f[3,1][1,1,TopLeft()], "E",padding = (0.0,0.0,5,0.0))
-    Label(f[3,1][1,2,TopLeft()], "F",padding = (0.0,0.0,5,0.0))
+    Label(f[1,1][1,3,TopLeft()], "C",padding = (0.0,0.0,5,0.0))
+    Label(f[2,1][1,1,TopLeft()], "D",padding = (0.0,0.0,5,0.0))
+    Label(f[2,1][1,2,TopLeft()], "E",padding = (0.0,0.0,5,0.0))
+    Label(f[3,1][1,1,TopLeft()], "F",padding = (0.0,0.0,5,0.0))
+    Label(f[3,1][1,2,TopLeft()], "G",padding = (0.0,0.0,5,0.0))
 
     Label(f[3,1, Bottom()], "Temperature °C", padding = (0.0,0,0,30))
 
     #plotting mean plot
     c = ("black", 0.6)
-    [Makie.scatter!(a11, T_plot, N_sim_μ[1,:,i], color = c) for i = 1:nrep]
-    Makie.lines!(a11, T_plot, N_pred_μ[1,:], color = "red")
+    [Makie.scatter!(a11, T_plot, N_sim_μ[2,:,i], color = c) for i = 1:nrep]
+    Makie.lines!(a11, T_plot, N_pred_μ[2,:], color = "red")
 
-    [Makie.scatter!(a12, T_plot, N_sim_μ[2,:,i], color = c) for i = 1:nrep]
-    Makie.lines!(a12, T_plot, N_pred_μ[2,:], color = "red")
+    [Makie.scatter!(a121, T_plot, N_sim_μ[1,:,i], color = c) for i = 1:nrep]
+    Makie.lines!(a121, T_plot, N_pred_μ[1,:], color = "red")
+
+    [Makie.scatter!(a122, T_plot, N_sim_μ[3,:,i], color = c) for i = 1:nrep]
+    Makie.lines!(a122, T_plot, N_pred_μ[3,:], color = "red")
 
     #plotting var plots
     [Makie.scatter!(a21, T_plot, N_sim_σ[1,:,i], color = c) for i = 1:nrep]
@@ -238,9 +244,10 @@ begin
 
     [Makie.scatter!(a32, T_plot, N_sim_Σ[2,:,i], color = c) for i = 1:nrep]
     Makie.lines!(a32, T_plot, N_pred_Σ[2,:], color = "red")
-
         
     f
 end
 
 save("./docs/Figures/assembly.pdf", f)
+
+a121
