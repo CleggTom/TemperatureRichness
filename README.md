@@ -1,4 +1,4 @@
-# Temperature_feasibility
+# Temperature Feasibility
 This repository contains code for the paper __"Variation in thermal physiology can drive the temperature-dependence of microbial community richness"__
 
 # Code
