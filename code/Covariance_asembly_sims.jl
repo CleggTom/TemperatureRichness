@@ -9,6 +9,8 @@ using Colors
 
 include("./GLV/GLV.jl")
 
+Threads.nthreads()
+
 ### Test @1 temp
 begin
     Random.seed!(1)
@@ -48,15 +50,15 @@ begin
     T_vec = -1.5:0.3:1.5
     
     #results
-    res = []
-    nrep = 10
+    res = Vector{Any}(undef, length(T_vec))
+    nrep = 3
     N_inv = 1000
     for (i,T) = enumerate(T_vec)
         print(i,"\r")
         f_r(x...) = rand(GLV.trait_temp(r, T), x...)
         f_a(x...) = rand(GLV.trait_temp(a, T), x...)
 
-        push!(res,[GLV.assembly(f_r,f_a,N_inv) for i = 1:nrep])
+        res[i] = [GLV.assembly(f_r,f_a,N_inv) for i = 1:nrep]
     end
 
     #plot timeseries
@@ -87,11 +89,11 @@ end
 #variation
 μ_vec = [-0.6,0.0,0.6]
 σ_vec = [0.01,0.2]
-Σ_vec = [-0.1,0.0]
+Σ_vec = [0.0,-0.1]
 
 #temp vec
-T_vec = -1.5:0.1:1.5
-nrep = 3
+T_vec = -1.5:0.3:1.5
+nrep = 10
 N_inv = 2000
 
 
@@ -106,7 +108,7 @@ begin
     N_sim_μ = Array{Float64, 3}(undef,length(μ_vec),length(T_vec),nrep)
     N_pred_μ = Array{Float64, 2}(undef,length(μ_vec),length(T_vec))
 
-    for μ = eachindex(μ_vec)
+    Threads.@threads for μ = eachindex(μ_vec)
         res = []
         for (i,T) = enumerate(T_vec)
             println(μ,"  ",i, " of ", length(T_vec),"\r")
@@ -191,7 +193,7 @@ end
 begin
     T_plot = GLV.ΔT_to_C.(T_vec,13)
 
-    f = Makie.Figure(resolution = (550, 750))
+    f = Makie.Figure(resolution = (550, 700))
 
     a11 = f[1,1][1,1] = Axis(f)
     a121 = f[1,1][1,2] = Axis(f)
@@ -203,7 +205,10 @@ begin
     a31 = f[3,1][1,1] = Axis(f)
     a32 = f[3,1][1,2] = Axis(f)
 
-    linkyaxes!(a11,a121,a122)
+
+    # linkyaxes!(a11,a121,a122,a21,a22,a31,a32)
+
+    linkyaxes!(a11,a121, a122)
     linkyaxes!(a21,a22)
     linkyaxes!(a31,a32)
 
@@ -238,7 +243,7 @@ begin
     [Makie.scatter!(a22, T_plot, N_sim_σ[2,:,i], color = c) for i = 1:nrep]
     Makie.lines!(a22, T_plot, N_pred_σ[2,:], color = "red")
 
-    #plotting var plots
+    #plotting cov plots
     [Makie.scatter!(a31, T_plot, N_sim_Σ[1,:,i], color = c) for i = 1:nrep]
     Makie.lines!(a31, T_plot, N_pred_Σ[1,:], color = "red")
 
